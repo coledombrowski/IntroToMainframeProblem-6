@@ -1,0 +1,224 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. PROB6CBL.
+       AUTHOR. COLE DOMBROWSKI.
+
+       ENVIRONMENT DIVISION.
+       INPUT-OUTPUT SECTION.
+       FILE-CONTROL.
+
+           SELECT INVENTORY-INPUT-FILE ASSIGN TO 'UT-S-INV6IN'
+
+
+           SELECT INVENTORY-OUTPUT-FILE ASSIGN TO 'UT-S-INV6OUT'
+
+
+       DATA DIVISION.
+       FILE SECTION.
+       FD  INVENTORY-INPUT-FILE RECORDING MODE IS F.
+       01                                   PICTURE X(80).
+
+       FD  INVENTORY-OUTPUT-FILE RECORDING MODE IS F.
+       01  PRINT-A-SINGLE-LINE              PICTURE X(132).
+
+       WORKING-STORAGE SECTION.
+       01  WORKING-VARIABLES.
+          05  EOF-PURCHASE-WS                PIC X(3) VALUE 'NO'.
+          05  TOTAL-RECORDS-WS               PIC 999 VALUE ZERO.
+          05  TOTAL-DOLLARS-WS               PIC S9(8)V99 VALUE ZERO.
+          05  NUMBER-LINES-PER-PAGE-WS       PIC 99 VALUE ZERO.
+
+
+          05  HOLD-DATE-WS.
+             10  HOLD-YR-WS                  PIC XXXX.
+             10  HOLD-MO-WS                  PIC XX.
+             10  HOLD-DY-WS                  PIC XX.
+
+
+       01  INVENTORY-INPUT-RECORD.
+          05  RECORD-TYPE-IN                 PIC X.
+          05  BATCH-NUMBER-IN                PIC X(2).
+          05  SUPPLIER-NUMBER-IN             PIC X(5).
+          05  VOUCHER-NUMBER-IN              PIC X(6).
+          05  INVOICE-NUMBER-IN              PIC X(8).
+          05  ACCOUNT-NUMBER-IN              PIC 9(4).
+          05  STORE-NUMBER-IN                PIC X(3).
+          05  DATE-IN                        PIC X(8).
+          05  FILLER-IN                      PIC X(12).
+          05  AMOUNT-IN                      PIC S9(6)V99.
+          05  SUPPLIER-NAME-IN               PIC X(23).
+
+       01  REPORT-HEADER-LINE-SETUP.
+          05  FILLER                    PIC X(10) VALUE 'RUN DATE: '.
+          05  REPORT-HEADER-DATE-OUT.
+             10  HEADER-MO-OUT          PIC 99.
+             10  FILLER                 PIC X VALUE '/'.
+             10  HEADER-DY-OUT          PIC 99.
+             10  FILLER                 PIC X VALUE '/'.
+             10  HEADER-YR-OUT          PIC 9999.
+
+          05                           PIC X(4) VALUE SPACES.
+          05  PIC X(36) VALUE 'INVENTORY REPORT FOR COLE DOMBROWSKI'.
+
+       01  COLUMN-HEADER-LINE1-SETUP.
+          05  FILLER                   PIC X.
+          05                           PIC X(3)   VALUE 'REC'.
+          05                           PIC X      VALUE SPACE.
+          05                           PIC X(4)   VALUE 'BTCH'.
+          05                           PIC X      VALUE SPACE.
+          05                           PIC X(5)   VALUE 'SUPPL'.
+          05                           PIC X      VALUE SPACE.
+          05                           PIC X(5)   VALUE 'VOUCH'.
+          05                           PIC X      VALUE SPACE.
+          05                           PIC X(7)   VALUE 'INVOICE'.
+          05                           PIC X(2)   VALUE SPACE.
+          05                           PIC X(4)   VALUE 'ACCT'.
+          05                           PIC X      VALUE SPACE.
+          05                           PIC X(3)   VALUE 'STR'.
+          05                           PIC X(5)   VALUE SPACE.
+          05                           PIC X(4)   VALUE 'DATE'.
+          05                           PIC X(10)  VALUE SPACE.
+          05                           PIC X(6)   VALUE 'AMOUNT'.
+          05                           PIC X(8)   VALUE SPACE.
+          05                           PIC X(8)   VALUE 'SUPPLIER'.
+          05                           PIC X(15)  VALUE SPACE.
+
+       01  COLUMN-HEADER-LINE2-SETUP.
+          05  FILLER                   PIC X.
+          05                           PIC X(3) VALUE 'TYP'.
+          05                           PIC X VALUE SPACE.
+          05                           PIC X(4) VALUE 'NUMB'.
+          05                           PIC X VALUE SPACE.
+          05                           PIC X(5) VALUE 'NUMBR'.
+          05                           PIC X VALUE SPACE.
+          05                           PIC X(5) VALUE 'NUMBR'.
+          05                           PIC X VALUE SPACE.
+          05                           PIC X(6) VALUE 'NUMBER'.
+          05                           PIC X(3) VALUE SPACE.
+          05                           PIC X(4) VALUE 'NUMB'.
+          05                           PIC X VALUE SPACE.
+          05                           PIC X(3) VALUE 'NUM'.
+          05                           PIC X(33) VALUE SPACE.
+          05                           PIC X(4) VALUE 'NAME'.
+          05                           PIC X(17) VALUE SPACE.
+
+       01  DETAILED-OUTPUT-LINE-SETUP.
+          05  FILLER                    PIC X.
+          05  RECORD-TYPE-OUT           PIC X.
+          05                            PIC X(3)  VALUE SPACE.
+          05  BATCH-NUMBER-OUT          PIC X(2).
+          05                            PIC X(2)  VALUE SPACE.
+          05  SUPPLIER-NUMBER-OUT       PIC X(5).
+          05                            PIC X     VALUE SPACE.
+          05  VOUCHER-NUMBER-OUT        PIC X(6).
+          05                            PIC X     VALUE SPACE.
+          05  INVOICE-NUMBER-OUT        PIC X(8).
+          05                            PIC X     VALUE SPACE.
+          05  ACCOUNT-NUMBER-OUT        PIC 9(4).
+          05                            PIC X     VALUE SPACE.
+          05  STORE-NUMBER-OUT          PIC X(3).
+          05                            PIC X     VALUE SPACE.
+          05  DATE-OUT                  PIC XX/XX/XXXX.
+          05                            PIC X     VALUE SPACE.
+          05  AMOUNT-OUT                PIC $$$$,$$$,$$9.99BCR.
+          05                            PIC X     VALUE SPACE.
+          05  SUPPLIER-NAME-OUT         PIC X(23).
+
+       01  TOTAL-RECORDS-LINE-SETUP.
+           05  FILLER                  PIC X.
+           05                          PIC X(5) VALUE SPACE.
+           05                          PIC X(38) VALUE
+           'NUMBER OF RECORDS PROCESSED IS:'.
+           05 TOTAL-RECORDS-OUT        PIC ZZZ9.
+
+       01  TOTAL-DOLLARS-LINE-SETUP.
+          05  FILLER PIC X.
+          05                           PIC X(5) VALUE SPACE.
+          05                           PIC X(41) VALUE
+          'TOTAL NET DOLLAR AMOUNT IS:'.
+          05  TOTAL-DOLLARS-OUT        PIC $$$$,$$$,$$9.99BCR.
+
+       PROCEDURE DIVISION.
+       100-MAINLINE.
+
+          PERFORM 200-OPEN.
+
+          PERFORM 300-PROCESS UNTIL EOF-PURCHASE-WS = 'YES'.
+
+          PERFORM 900-CLOSE.
+
+          STOP RUN.
+
+       200-OPEN.
+          OPEN INPUT INVENTORY-INPUT-FILE OUTPUT INVENTORY-OUTPUT-FILE
+          PERFORM 250-READ-ONE-RECORD
+
+          MOVE FUNCTION CURRENT-DATE TO HOLD-DATE-WS
+
+          MOVE HOLD-MO-WS TO HEADER-MO-OUT
+          MOVE HOLD-DY-WS TO HEADER-DY-OUT
+          MOVE HOLD-YR-WS TO HEADER-YR-OUT
+
+          PERFORM 500-WRITE-HEADER.
+
+       250-READ-ONE-RECORD.
+          READ INVENTORY-INPUT-FILE INTO INVENTORY-INPUT-RECORD
+             AT END MOVE 'YES' TO EOF-PURCHASE-WS
+          END-READ.
+
+       300-PROCESS.
+          MOVE RECORD-TYPE-IN TO RECORD-TYPE-OUT
+          MOVE BATCH-NUMBER-IN TO BATCH-NUMBER-OUT
+          MOVE SUPPLIER-NUMBER-IN TO SUPPLIER-NUMBER-OUT
+          MOVE VOUCHER-NUMBER-IN TO VOUCHER-NUMBER-OUT
+          MOVE INVOICE-NUMBER-IN TO INVOICE-NUMBER-OUT
+          MOVE ACCOUNT-NUMBER-IN TO ACCOUNT-NUMBER-OUT
+          MOVE STORE-NUMBER-IN TO STORE-NUMBER-OUT
+          MOVE DATE-IN TO DATE-OUT
+          MOVE AMOUNT-IN TO AMOUNT-OUT
+          MOVE SUPPLIER-NAME-IN TO SUPPLIER-NAME-OUT
+
+          ADD   1               TO  TOTAL-RECORDS-WS
+          ADD   AMOUNT-IN       TO  TOTAL-DOLLARS-WS
+
+          MOVE  DETAILED-OUTPUT-LINE-SETUP TO PRINT-A-SINGLE-LINE
+          WRITE PRINT-A-SINGLE-LINE AFTER ADVANCING 1 LINE
+
+          ADD 1 TO NUMBER-LINES-PER-PAGE-WS
+
+          IF TOTAL-RECORDS-WS = 15
+
+          THEN PERFORM 500-WRITE-HEADER
+
+          END-IF
+
+          PERFORM 250-READ-ONE-RECORD.
+
+       500-WRITE-HEADER.
+          MOVE REPORT-HEADER-LINE-SETUP TO PRINT-A-SINGLE-LINE
+          WRITE PRINT-A-SINGLE-LINE AFTER PAGE
+
+          MOVE COLUMN-HEADER-LINE1-SETUP TO PRINT-A-SINGLE-LINE
+          WRITE PRINT-A-SINGLE-LINE AFTER 2 LINES
+
+          MOVE COLUMN-HEADER-LINE2-SETUP TO PRINT-A-SINGLE-LINE
+          WRITE PRINT-A-SINGLE-LINE AFTER 1 LINE
+
+          MOVE SPACES TO PRINT-A-SINGLE-LINE
+          WRITE PRINT-A-SINGLE-LINE AFTER 3 LINES
+
+          MOVE 0 TO NUMBER-LINES-PER-PAGE-WS.
+
+       900-CLOSE.
+          MOVE REPORT-HEADER-LINE-SETUP TO PRINT-A-SINGLE-LINE
+          WRITE PRINT-A-SINGLE-LINE AFTER PAGE
+
+          MOVE TOTAL-RECORDS-WS TO TOTAL-RECORDS-OUT
+          MOVE TOTAL-DOLLARS-WS TO TOTAL-DOLLARS-OUT
+
+          MOVE TOTAL-RECORDS-LINE-SETUP TO PRINT-A-SINGLE-LINE
+          WRITE PRINT-A-SINGLE-LINE AFTER 3 LINES
+
+          MOVE TOTAL-DOLLARS-LINE-SETUP TO PRINT-A-SINGLE-LINE
+          WRITE PRINT-A-SINGLE-LINE AFTER 1 LINE
+
+          CLOSE INVENTORY-INPUT-FILE INVENTORY-OUTPUT-FILE.
